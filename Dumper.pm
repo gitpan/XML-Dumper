@@ -15,6 +15,23 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
 
 =head1 SYNOPSIS
 
+  # ===== OO-way
+  use XML::Dumper;
+  $dump = new XML::Dumper;
+
+  $xml = $dump->pl2xml( $perl );
+  $perl = $dump->xml2pl( $xml );
+  $dump->pl2xml( $perl, "my_perl_data.xml.gz" );
+
+  # ===== Functional way
+  use XML::Dumper qw( :all );
+
+  $xml = pl2xml( $perl );
+  $perl = xml2pl( $xml );
+
+
+=head1 EXTENDED SYNOPSIS
+
   use XML::Dumper;
   my $dump = new XML::Dumper;
 
@@ -64,11 +81,22 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
 
   my $perl = $dump->xml2pl( $xml );
 
-  # ==== Convert an XML file to Perl code
+  # ===== Convert an XML file to Perl code
   my $perl = $dump->xml2pl( $file );
   
-  # ==== And serialize Perl code to an XML file
+  # ===== And serialize Perl code to an XML file
   $dump->pl2xml( $perl, $file );
+
+  # ===== USE COMPRESSION
+  $dump->pl2xml( $perl, $file.".gz" );
+
+  # ===== INCLUDE AN IN-DOCUMENT DTD
+  $dump->dtd;
+  my $xml_with_dtd = $dump->pl2xml( $perl );
+
+  # ===== USE EXTERNAL DTD
+  $dump->dtd( $file, $url );
+  my $xml_with_link_to_dtd = $dump->pl2xml( $perl );
 
 =head1 DESCRIPTION
 
@@ -83,14 +111,15 @@ reconstituted in the same environment, all should be well. And it is.
 Additionally, because XML benefits so nicely from compression, XML::Dumper
 understands gzipped XML files. It does so with an optional dependency on
 Compress::Zlib. So, if you dump a Perl variable with a file that has an
-extension of '.xml.gz', it will store and compress the file in XML format.
+extension of '.xml.gz', it will store and compress the file in gzipped format.
 Likewise, if you read a file with the extension '.xml.gz', it will uncompress
 the file in memory before parsing the XML back into a Perl variable.
 
 Another fine challenge that this module rises to meet is that it understands
-circular definitions. This includes doubly-linked lists, circular references,
-and the so-called 'Flyweight' pattern of Object Oriented programming. So it
-can take the gnarliest of your perl data, and should do just fine.
+circular definitions and multiple references to a single object. This includes 
+doubly-linked lists, circular references, and the so-called 'Flyweight' pattern of 
+Object Oriented programming. So it can take the gnarliest of your perl data, and 
+should do just fine.
 
 =head2 FUNCTIONS AND METHODS
 
@@ -107,10 +136,10 @@ require Exporter;
 use XML::Parser;
 
 our @ISA = qw( Exporter );
-our %EXPORT_TAGS = ( 'all' => [ qw( xml_compare xml_identity ) ] );
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{ 'all' } } );
-our @EXPORT = qw( xml_compare xml_identity );
-our $VERSION = '0.59'; 
+our %EXPORT_TAGS = ( );
+our @EXPORT_OK = ( );
+our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity dtd );
+our $VERSION = '0.62'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -123,11 +152,13 @@ INIT {
 	}
 }
 
+our $dump = new XML::Dumper;
+
 # ============================================================
 sub new {
 # ============================================================
 
-=item * new - XML::Dumper constructor. 
+=item * new() - XML::Dumper constructor. 
 
 Creates a lean, mean, XML dumping machine. It's also completely 
 at your disposal.
@@ -150,6 +181,82 @@ sub init {
 	$self->{ perldata }	= {};
 	$self->{ xml }		= {};
 	1;
+}
+
+# ============================================================
+sub dtd {
+# ============================================================
+
+=item * dtd -
+
+Generates a Document Type Dictionary for the 'perldata' data
+type. The default behaviour is to embed the DTD in the XML,
+thereby creating valid XML. Given a filename, the DTD will be
+written out to that file and the XML document for your Perl data 
+will link to the file. Given a filename and an URL, the DTD will
+be written out the file and the XML document will link to the URL.
+XML::Dumper doesn't try really hard to determine where your DTD's
+ought to go or relative paths or anything, so be careful with
+what arguments you supply this method, or just go with the default
+with the embedded DTD. Between DTD's and Schemas, the potential
+for more free-form data to be imported and exported becomes
+feasible.
+
+Usage:
+
+  dtd();				# Causes XML to include embedded DTD
+  dtd( $file );			# DTD saved to $file; XML will link to $file
+  dtd( $file, $url );	# DTD saved to $file; XML will link to $url
+  dtd( 0 );				# Prevents XML from including embedded DTD
+
+=cut
+
+# ------------------------------------------------------------
+	my $self = ( ref $_[0] && (ref $_[0]) =~ /XML::Dumper/ ) ? shift : $dump;
+	my $file = shift;
+	my $url = shift;
+
+	my $dtd = qq{<!ELEMENT scalar (#PCDATA)>
+<!ELEMENT scalarref (#PCDATA)>
+<!ATTLIST scalarref 
+	blessed_package CDATA #IMPLIED
+ 	memory_address CDATA #IMPLIED>
+<!ELEMENT arrayref (item*)>
+<!ATTLIST arrayref 
+	blessed_package CDATA #IMPLIED
+ 	memory_address CDATA #IMPLIED>
+<!ELEMENT hashref (item*)>
+<!ATTLIST hashref 
+	blessed_package CDATA #IMPLIED
+ 	memory_address CDATA #IMPLIED>
+<!ELEMENT item (#PCDATA|scalar|scalarref|arrayref|hashref)*>
+<!ATTLIST item 
+	key CDATA #REQUIRED
+	defined CDATA #IMPLIED>
+<!ELEMENT perldata (scalar|scalarref|arrayref|hashref)*>
+};
+
+	if( defined $file && $file ) {
+		open DTD, ">$file" or die $!;
+		print DTD $dtd;
+		close DTD;
+		$url = defined $url ? $url : $file;
+		$self->{ dtd } = qq{
+<!DOCTYPE perldata SYSTEM "$url">
+};
+	} elsif( not defined $file ) {
+		$self->{ dtd } = join( "\n", 
+			"<?xml version=\"1.0\"?>",
+			"<!DOCTYPE perldata [",
+			( map { /^\t/ ? $_ : "  $_" } split /\n/, $dtd ),
+			']>',
+			undef);
+	} else {
+		delete $self->{ dtd };
+		return;
+	}
+
+	$self->{ dtd };
 }
 
 # ============================================================
@@ -294,7 +401,7 @@ sub perl2xml {
 sub pl2xml {
 # ============================================================
 
-=item * pl2xml -
+=item * pl2xml( $xml, [ $file ] ) -
 
 (Also perl2xml(), for those who enjoy readability over brevity).
 
@@ -306,13 +413,15 @@ Usage: See Synopsis
 =cut
 
 # ------------------------------------------------------------
-    my $self = shift;
+	my $self = ( ref $_[0] && (ref $_[0]) =~ /XML::Dumper/ ) ? shift : $dump;
 	my $ref = shift;
 	my $file = shift;
 
 	$self->init;
 
-	my $xml = "<perldata>" . $self->dump( $ref, 1 ) . "\n</perldata>\n";
+	my $xml = 
+ 		( defined $self->{ dtd } ? $self->{ dtd } : undef ) .
+		"<perldata>" . $self->dump( $ref, 1 ) . "\n</perldata>\n";
 
 	if( defined $file ) { 
 		if( $file =~ /\.xml\.gz$/i ) {
@@ -540,7 +649,7 @@ sub xml2perl {
 sub xml2pl {
 # ============================================================
 
-=item * xml2pl -
+=item * xml2pl( $xml_or_filename, [ $callback ] ) -
 
 (Also xml2perl(), for those who enjoy readability over brevity.)
 
@@ -553,18 +662,12 @@ Currently, the only supported invocation of callbacks is through soft
 references. That is to say, the callback argument ought to be a string
 that matches the name of a callable method for your classes. If you have
 a congruent interface, this should work like a peach. If your class
-interface doesn't have such a named method, it won't be called. The
-null-string method is not supported, because I can't think of a good
-reason to support it. (OK, that was lame, but that kind of thinking
-makes my head hurt. If you can prove that null-string methods ought to
-be allowed, I'll do it. If you don't know what the null-string method is,
-curse The Damian for having invoked such a beast, and move along in
-blissful ignorance).
+interface doesn't have such a named method, it won't be called. 
 
 =cut
 
 # ------------------------------------------------------------
-	my $self = shift;
+	my $self = ( ref $_[0] && (ref $_[0]) =~ /XML::Dumper/) ? shift : $dump;
 	my $xml = shift;
 	my $callback = shift;
 
@@ -614,7 +717,7 @@ blissful ignorance).
 sub xml_compare {
 # ============================================================
 
-=item * xml_compare - Compares xml for content
+=item * xml_compare( $xml1, $xml2 ) - Compares xml for content
 
 Compares two dumped Perl data structures (that is, compares the xml) for
 identity in content. Use this function rather than perl's built-in string 
@@ -633,6 +736,12 @@ other, or identical. This method is exported by default.
 	$xml2 =~ s/(<[^>]*)\smemory_address="\dx[A-Za-z0-9]+"([^<]*>)/$1$2/g;
 	$xml1 =~ s/(<[^>]*)\sdefined=\"false\"([^<]>)/$1$2/g; # For backwards 
 	$xml2 =~ s/(<[^>]*)\sdefined=\"false\"([^<]>)/$1$2/g; # compatibility
+	$xml1 =~ s/<\?xml .*>//; # Ignore XML declaration
+	$xml2 =~ s/<\?xml .*>//;
+	$xml1 =~ s/<\!DOCTYPE perldata \[.*\]>//s; # Remove DTD
+	$xml2 =~ s/<\!DOCTYPE perldata \[.*\]>//s;
+	$xml1 =~ s/^\n//gm; # Remove empty newlines
+	$xml2 =~ s/^\n//gm;
 
 	return not( $xml1 cmp $xml2 );
 }
@@ -641,7 +750,7 @@ other, or identical. This method is exported by default.
 sub xml_identity {
 # ============================================================
 
-=item * xml_identity - Compares xml for identity
+=item * xml_identity( $xml1, $xml2 ) - Compares xml for identity
 
 Compares two dumped Perl data structures (that is, compares the xml) for
 identity in instantiation. This function will return true for any two
@@ -683,15 +792,14 @@ __END__
 
 =head1 BUGS AND DEPENDENCIES
 
-XML::Dumper has changed API since 0.4. While this violates most every benefit
-of object-oriented programming, I felt it was necessary, as the functions
-simply didn't work as advertised. That is, xml2pl really didnt accept xml
-as an argument; what it wanted was an XML Parse tree. To correct for the 
+XML::Dumper has changed API since 0.4, as a response to a bug report 
+from PerlMonks. I felt it was necessary, as the functions simply didn't 
+work as advertised. That is, xml2pl really didnt accept xml as an 
+argument; what it wanted was an XML Parse tree. To correct for the 
 API change, simply don't parse the XML before feeding it to XML::Dumper.
 
 XML::Dumper also has no understanding of typeglobs (references or not),
 references to regular expressions, or references to Perl subroutines.
-If the whim strikes me, or if someone needs this feature, I may fix this.
 Turns out that Data::Dumper doesn't do references to Perl subroutines,
 either, so at least I'm in somewhat good company.
 
@@ -705,7 +813,17 @@ documentation for XML::Parser for more information.
 
 =head1 REVISIONS AND CREDITS
 
-See Changes file.
+The list of credits got so long that I had to move it to the Changes
+file. Thanks to all those who've contributed with bug reports and
+suggested features! Keep 'em coming!
+
+I've had ownership of the module since June of 2002, and very much
+appreciate requests on how to make the module better. It has served me
+well, both as a learning tool on how I can repay my debt to the Perl
+Community, and as a practical module that is useful. I'm thrilled to
+be able to offer this bit of code. So, if you have suggestions, bug
+reports, or feature requests, please let me know and I'll do my best 
+to make this a better module.
 
 =head1 CURRENT MAINTAINER
 
@@ -720,6 +838,9 @@ Jonathan Eisenzopf E<lt>eisen@pobox.comE<gt>
  
 =head1 SEE ALSO
 
-perl(1), XML::Parser(3). Compress::Zlib(3)
+perl(1)
+Compress::Zlib(3)
+XML::Parser(3)
+Data::DumpXML(3)
 
 =cut

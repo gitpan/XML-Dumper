@@ -1,5 +1,16 @@
 Revision history for Perl extension XML::Dumper.
 
+0.62  Sun Jan 12 19:48:12 PST 2003
+    - Added the ability to dump a DTD for a valid XML document. Investigating
+	  more interesting forms of XML data (given DTD or Schema, slurp XML into
+	  Perl and back). Corrected errors in POD, Changes, README, and tests.
+
+0.60  Tue Jan  7 22:00:15 PST 2003
+    - Responded to some old comments by crazyinsomniac, from Perl Monks. 
+	  The module now dumps and undumps with or without the OO-ish interface. 
+	  I might add the punDump feature, but the feedback from pun-loving Perl 
+	  monks may lead to pun-demonium.
+
 0.59  Thu Nov 28 22:43:51 PST 2002
 	- Responded to bug report by Peter S. May. XML::Dumper now correctly
 	  interprets undef() values as being undefined as opposed to being a zero-
@@ -61,3 +72,5 @@ Chris Thorman E<lt>ct@ignitiondesign.comE<gt>
 L.M.Orchard E<lt>deus_x@pobox.comE<gt>
 
 DeWitt Clinton E<lt>dewitt@eziba.comE<gt>
+
+Niels Vegter
