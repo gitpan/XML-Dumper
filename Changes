@@ -1,8 +1,21 @@
 Revision history for Perl extension XML::Dumper.
+0.71  Mon Feb  2 22:45:33 PST 2004
+    - Fixed a backwards-compatibility issue with 0.40 and <hash> vs. <hashref>
+      bug report by Jon Lapham, who also suggested the fix. <hash> is still
+      wrong, but for the sake of backwards-compatibility, I'm not going to
+      argue about who killed who. In the interest of forward progression, 
+      <hash> will be converted (correctly) to <hashref> on writing.
+
+    - Added test 10_backwards_compatible.t
+
+    - Fixed the MANIFEST to include t/09_repeated_references.t
+
+    - Re-named 'profile.pl' to 'profile' per suggestion from CPAN testers
+
 0.70  Tue Jan 27 15:07:50 PST 2004
     - Fixed a bug sent in by Alex Pavlovic which demonstrated that re-used
       memory addresses weren't being properly implemented for hashes. See
-      t/09_references for an example.
+      t/09_repeated_references.t for an example.
 
 0.69  Sun Oct  5 10:51:27 PDT 2003
     - Figured out a kooky method to discover whether or not a package is

@@ -139,7 +139,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
-our $VERSION = '0.70'; 
+our $VERSION = '0.71'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -549,7 +549,7 @@ sub undump {
 			}
 
 			# ----------------------------------------
-			if( /^hashref/ ) {
+			if( /^hash(?:ref)?/ ) {
 			# ----------------------------------------
 				$ref = {};
 				$self->{ perldata }{ $address } = $ref if( $address );
