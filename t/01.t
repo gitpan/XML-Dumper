@@ -1,13 +1,12 @@
 #! /usr/local/bin/perl
 
 use strict;
-use blib;
 use XML::Dumper;
 use Test::Harness;
 
-BEGIN { $| = 1; print "1..10\n"; }
+BEGIN { $| = 1; print "1..11\n"; }
 
-open TEST11, "test.xml" or die "Can't open 'test.xml' for reading $!";
+open TEST11, "t/data/01-11.xml" or die "Can't open 't/data/01-11.xml' for reading $!";
 my $test_11_xml = join "", <TEST11>;
 close TEST11;
 
@@ -141,8 +140,8 @@ foreach $test_xml (@$TestRuns)
 			last TEST;
 		}
 		if( $test_num == 11 ) {
-			$perl = $Dumper->xml2pl( 'test.xml' );
-			$xml = $Dumper->pl2xml( $perl, 'test.xml' );
+			$perl = $Dumper->xml2pl( 't/data/01-11.xml' );
+			$xml = $Dumper->pl2xml( $perl, 't/data/01-11.xml' );
 			last TEST;
 		}
 		DEFAULT: {

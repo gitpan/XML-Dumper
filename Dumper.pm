@@ -105,7 +105,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( 'all' => [ qw( xml_compare xml_identity ) ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{ 'all' } } );
 our @EXPORT = qw( xml_compare xml_identity );
-our $VERSION = '0.56'; 
+our $VERSION = '0.57'; 
 
 # ============================================================
 sub new {
@@ -160,7 +160,7 @@ sub dump {
 			# ----------------------------------------
 				last OBJECT if /^(?:SCALAR|HASH|ARRAY)$/;
 				$class = $_;
-				&quote_xml_chars( $class );
+				$class = &quote_xml_chars( $class );
 				($_,$address) = scalar( $ref ) =~ /$class=([^(]+)\(([x0-9A-Fa-f]+)\)/;
 			}
 
@@ -422,13 +422,14 @@ sub undump {
 # ============================================================
 sub quote_xml_chars {
 # ============================================================
-    $_[0] =~ s/&/&amp;/g;
-    $_[0] =~ s/</&lt;/g;
-    $_[0] =~ s/>/&gt;/g;
-    $_[0] =~ s/'/&apos;/g;
-    $_[0] =~ s/"/&quot;/g;
-    $_[0] =~ s/([\x80-\xFF])/&XmlUtf8Encode(ord($1))/ge;
-    return($_[0]);
+	local $_ = shift;
+    s/&/&amp;/g;
+    s/</&lt;/g;
+    s/>/&gt;/g;
+    s/'/&apos;/g;
+    s/"/&quot;/g;
+    s/([\x80-\xFF])/&XmlUtf8Encode(ord($1))/ge;
+    return $_;
 }
 
 # ============================================================
@@ -580,6 +581,10 @@ which in turn requires James Clark's expat package itself. See the
 documentation for XML::Parser for more information.
 
 =head1 REVISIONS
+
+0.57    Responded to bug report by Niels Vegter. Code now better handles
+literal scalar references. Changed the test suite to scale better, using
+some more of the features of Test::Harness.
 
 0.56	Added file reading and writing features
 

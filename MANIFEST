@@ -4,5 +4,6 @@ MANIFEST
 Makefile.PL
 profile.pl
 README
-test.xml
-test.pl
+t/01.t
+t/02.t
+t/data/01-11.xml
