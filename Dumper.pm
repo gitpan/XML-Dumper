@@ -29,7 +29,6 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
   $xml = pl2xml( $perl );
   $perl = xml2pl( $xml );
 
-
 =head1 EXTENDED SYNOPSIS
 
   use XML::Dumper;
@@ -131,6 +130,7 @@ package XML::Dumper;
 
 require 5.005_62;
 use strict;
+use warnings;
 
 require Exporter;
 use XML::Parser;
@@ -139,7 +139,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity dtd );
-our $VERSION = '0.62'; 
+our $VERSION = '0.63'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -250,7 +250,7 @@ Usage:
 			"<!DOCTYPE perldata [",
 			( map { /^\t/ ? $_ : "  $_" } split /\n/, $dtd ),
 			']>',
-			undef);
+			'');
 	} else {
 		delete $self->{ dtd };
 		return;
@@ -306,7 +306,7 @@ sub dump {
 					( defined $$ref ? '' : " defined=\"false\"" ) .
 					">";
 				$self->{ xml }{ $address }++ if( $address );
-				$string = "\n" .  " " x $indent .  $type .  ($reused ? '' : &quote_xml_chars($$ref)) .  "</scalarref>";
+				$string = "\n" . " " x $indent .  $type . ($reused ? '' : &quote_xml_chars($$ref)) . "</scalarref>";
 				last PERL_TYPE;
 			}
 
@@ -385,10 +385,10 @@ sub dump {
 			( defined $ref ? '' : " defined=\"false\"" ) .
 			">";
 
-		$string .= "\n" . " " x $indent . $type . &quote_xml_chars($ref) . "</scalar>";
+		$string .= "\n" . " " x $indent . $type . &quote_xml_chars( $ref ) . "</scalar>";
     }
     
-    return($string);
+    return( $string );
 }
 
 # ============================================================
@@ -420,7 +420,7 @@ Usage: See Synopsis
 	$self->init;
 
 	my $xml = 
- 		( defined $self->{ dtd } ? $self->{ dtd } : undef ) .
+ 		( defined $self->{ dtd } ? $self->{ dtd } : '' ) .
 		"<perldata>" . $self->dump( $ref, 1 ) . "\n</perldata>\n";
 
 	if( defined $file ) { 
@@ -630,6 +630,7 @@ sub undump {
 sub quote_xml_chars {
 # ============================================================
 	local $_ = shift;
+	return $_ if not defined $_;
     s/&/&amp;/g;
     s/</&lt;/g;
     s/>/&gt;/g;

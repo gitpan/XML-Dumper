@@ -1,5 +1,15 @@
 Revision history for Perl extension XML::Dumper.
 
+      A while back, there was a suggestion to use the file header rather
+      than the file extension '.tar.gz' or '.tgz' to detect tarballed
+      files, which is correct. Unfortunately, I lost the e-mail that
+      had the patch, so if the author of said e-mail or other interested
+      parties could re-submit the patch, I'll be glad to incorporate it.
+
+0.63  Wed Jun 18 14:18:00 PDT 2003
+    - Added 'use warnings' pragma and applied patch to bugs. Both the bug 
+      report and the patch were supplied by Honza Holecek. Thanks, Honza!
+
 0.62  Sun Jan 12 19:48:12 PST 2003
     - Added the ability to dump a DTD for a valid XML document. Investigating
 	  more interesting forms of XML data (given DTD or Schema, slurp XML into
