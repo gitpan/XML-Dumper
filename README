@@ -3,7 +3,7 @@ This package is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 NAME
-XML::Dumper Version 0.4
+XML::Dumper Version 0.56
 
 DESCRIPTION
 XML::Dumper dumps Perl data to a structured XML format.
@@ -14,8 +14,18 @@ This might be useful for dumping Perl objects to files
 using an XML format that can be reloaded or accessed by
 other programs. Maybe even other languages.
 
-Feel free to contact me at eisen@pobox.com if you have 
-problems and/or suggestions.
+For more information, read the perldoc for this module.
+
+I (Mike Wong) am the current maintainer; I welcome bug reports,
+comments and suggestions to make this a better module for helping
+you to do what you need. Contact me via e-mail at 
+<mike_w3@pacbell.net>. 
+
+Better yet, if you're in Sonoma County of California, USA, join the 
+Sonoma Perl Mongers and we can talk there. For more information on
+Sonoma Perl Mongers, see
+
+  http://sonoma.pm.org
 
 REQUIREMENTS
 This module requires version 2.16 or greater of the XML::Parser module.
@@ -25,6 +35,10 @@ INSTALLATION
 perl Makefile.PL
 make
 make install
+
+CURRENT MAINTAINER
+
+Mike Wong <mike_w3@pacbell.net>
 
 CREDITS
 Chris Thorman <ct@ignitiondesign.com>

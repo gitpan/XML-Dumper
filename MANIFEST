@@ -2,4 +2,7 @@ Changes
 Dumper.pm
 MANIFEST
 Makefile.PL
-
+profile.pl
+README
+test.xml
+test.pl

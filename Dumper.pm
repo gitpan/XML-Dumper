@@ -40,7 +40,11 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
 		residence	=> 'Bedrock'
     }
   ];
-  $xml = $dump->pl2xml($perl);
+  $xml = $dump->pl2xml( $perl );
+
+  # ===== Dump to a file
+  my $file = "dump.xml";
+  $dump->pl2xml( $perl, $file );
 
   # ===== Convert XML to Perl code
   $xml = q|
@@ -64,7 +68,10 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
   </perldata>
   |;
 
-  my $perl = $dump->xml2pl($xml);
+  my $perl = $dump->xml2pl( $xml );
+
+  # ==== Convert an XML file to Perl code
+  my $perl = $dump->xml2pl( $file );
 
 =head1 DESCRIPTION
 
@@ -98,7 +105,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( 'all' => [ qw( xml_compare xml_identity ) ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{ 'all' } } );
 our @EXPORT = qw( xml_compare xml_identity );
-our $VERSION = '0.55'; 
+our $VERSION = '0.56'; 
 
 # ============================================================
 sub new {
@@ -254,7 +261,8 @@ sub pl2xml {
 
 =item * pl2xml -
 
-Converts Perl data to XML
+Converts Perl data to XML. If a second argument is given, then the Perl data
+will be stored to disk as XML, using the second argument as a filename.
 
 Usage: See Synopsis
 
@@ -263,14 +271,19 @@ Usage: See Synopsis
 # ------------------------------------------------------------
     my $self = shift;
 	my $ref = shift;
+	my $file = shift;
 
 	$self->init;
 
-    return(
-		"<perldata>" .
-		$self->dump($ref, 1) .
-		"\n</perldata>\n"
-	);
+	my $xml = "<perldata>" . $self->dump( $ref, 1 ) . "\n</perldata>\n";
+
+	if( defined $file ) { 
+		open FILE, ">$file" or die "Can't open '$file' for writing $!";
+		print FILE $xml;
+		close FILE;
+
+	}
+	return $xml;
 }
 
 # ============================================================
@@ -425,7 +438,9 @@ sub xml2pl {
 =item * xml2pl -
 
 Converts XML to a Perl datatype. If this method is given a second argument, 
-XML::Dumper will use the second argument as a callback (if possible). 
+XML::Dumper will use the second argument as a callback (if possible). If
+the first argument isn't XML and exists as a file, that file will be read
+and its contents will be used as the input XML.
 
 Currently, the only supported invocation of callbacks is through soft
 references. That is to say, the callback argument ought to be a string
@@ -447,6 +462,18 @@ blissful ignorance).
 	my $callback = shift;
 
 	$self->init;
+
+	if( $xml !~ /\</ ) {
+		if( -e $xml ) {
+			open FILE, $xml or die "Can't open file '$xml' for reading $!";
+			my @xml = <FILE>;
+			close FILE;
+			$xml = join "", @xml;
+
+		} else {
+			die "'$xml' does not exist as a file and is not XML.\n";
+		}
+	}
 
 	my $parser = new XML::Parser(Style => 'Tree');
 	my $tree = $parser->parse($xml);
@@ -544,7 +571,7 @@ If the whim strikes me, or if someone needs this feature, I may fix this.
 Turns out that Data::Dumper doesn't do references to Perl subroutines,
 either, so at least I'm in somewhat good company.
 
-XML::Dumper requires two perl modules, both available from CPAN
+XML::Dumper requires one perl module, available from CPAN
 
 	XML::Parser
 
@@ -554,8 +581,10 @@ documentation for XML::Parser for more information.
 
 =head1 REVISIONS
 
-0.55	Removed documentation of non-implemented code, fixed MANIFEST
-		errors. Fixed false dependency on Data::Dumper.
+0.56	Added file reading and writing features
+
+0.55	Removed documentation of non-implemented code, fixed MANIFEST errors. 
+Fixed false dependency on Data::Dumper.
 
 0.54	Added ability to handle soft referenced callbacks
 

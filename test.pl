@@ -7,6 +7,10 @@ use Test::Harness;
 
 BEGIN { $| = 1; print "1..10\n"; }
 
+open TEST11, "test.xml" or die "Can't open 'test.xml' for reading $!";
+my $test_11_xml = join "", <TEST11>;
+close TEST11;
+
 my $TestRuns = [
 		 
 # ===== SIMPLE SCALAR
@@ -115,35 +119,48 @@ END_TEST9
 </perldata>
 END_TEST10
 
+# ===== FILE READING AND WRITING
+$test_11_xml,
+
 ];
 
-my $TestNum;
-my $TestData;
-foreach $TestData (@$TestRuns)
+my $test_num;
+my $test_xml;
+foreach $test_xml (@$TestRuns)
 {
-	$TestNum++;
+	$test_num++;
 
 	my $Dumper = new XML::Dumper();
-	my $Ref;
+	my $perl;
+	my $xml;
 
-	if( $TestNum == 10 ) {
-		$Ref = $Dumper->xml2pl($TestData, "callback" );
-
-	} else {
-		$Ref = $Dumper->xml2pl($TestData);
+	TEST: {
+		if( $test_num == 10 ) {
+			$perl = $Dumper->xml2pl($test_xml, "callback" );
+			$xml = $Dumper->pl2xml( $perl );
+			last TEST;
+		}
+		if( $test_num == 11 ) {
+			$perl = $Dumper->xml2pl( 'test.xml' );
+			$xml = $Dumper->pl2xml( $perl, 'test.xml' );
+			last TEST;
+		}
+		DEFAULT: {
+			$perl = $Dumper->xml2pl($test_xml);
+			$xml = $Dumper->pl2xml( $perl );
+			last TEST;
+		}
 	}
 	
-	my $ReDump = $Dumper->pl2xml($Ref);
-	
-	if ( xml_compare( $TestData, $ReDump ))
+	if ( xml_compare( $test_xml, $xml ))
 	{
-		print "ok $TestNum\n"; 
+		print "ok $test_num\n"; 
 	}
 	else
 	{
-		print "not ok $TestNum\n";
-		print STDERR ("Test $TestNum failed: data doesn't match!\n\n" . 
-					  "Perl tree:\n$TestData\nXML tree:\n$ReDump\n\n");
+		print "not ok $test_num\n";
+		print STDERR ("Test $test_num failed: data doesn't match!\n\n" . 
+					  "Perl tree:\n$test_xml\nXML tree:\n$xml\n\n");
 	}
 }
 
