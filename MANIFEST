@@ -1,0 +1,13 @@
+Changes
+Dumper.pm
+MANIFEST
+Makefile.PL
+examples/REC-xml-19980210.xml
+examples/kjv.xml
+examples/t.perl
+examples/dump.pl
+examples/reg1.perl
+examples/t.xml
+examples/kjv.perl
+examples/reg1.xml
+
