@@ -24,7 +24,7 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
   $dump->pl2xml( $perl, "my_perl_data.xml.gz" );
 
   # ===== Functional way
-  use XML::Dumper qw( :all );
+  use XML::Dumper;
 
   $xml = pl2xml( $perl );
   $perl = xml2pl( $xml );
@@ -138,8 +138,8 @@ use XML::Parser;
 our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
-our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity dtd );
-our $VERSION = '0.65'; 
+our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
+our $VERSION = '0.67'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -316,7 +316,7 @@ sub dump {
 				my $type = 
 					"<hashref". 
 					($class ? " blessed_package=\"$class\"" : '' ). 
-					($address ? " memory_address=\"$address\"" : '' ).
+					($address && $self->{ xml }{ $address } > 1 ? " memory_address=\"$address\"" : '' ).
 					">";
 				$string = "\n" . " " x $indent . $type;
 				$self->{ xml }{ $address }++ if( $address );
@@ -677,7 +677,14 @@ interface doesn't have such a named method, it won't be called.
 	if( $xml !~ /\</ ) {
 		my $file = $xml;
 		if( -e $file ) {
-			if( $file =~ /\.xml\.gz$/ ) {
+			my $gzip_header_signature = pack "H4", "1f8b";
+			my $first_two_bytes;
+
+			open FILE, "<". $file or die "Can't open '$file' for reading $!";
+			defined read FILE, $first_two_bytes, 2 or die "Can't read first two bytes of '$file' $!";
+			close FILE;
+
+			if( $first_two_bytes eq $gzip_header_signature ) {
 				if( $COMPRESSION_AVAILABLE ) {
 					my $gz = Compress::Zlib::gzopen( $file, "rb" );
 					my @xml;
@@ -741,10 +748,14 @@ other, or identical. This method is exported by default.
 	$xml2 =~ s/<\?xml .*>//;
 	$xml1 =~ s/<\!DOCTYPE perldata \[.*\]>//s; # Remove DTD
 	$xml2 =~ s/<\!DOCTYPE perldata \[.*\]>//s;
-	$xml1 =~ s/^\n//gm; # Remove empty newlines
-	$xml2 =~ s/^\n//gm;
+	$xml1 =~ s/^\s*</</; # Remove empty space
+	$xml2 =~ s/^\s*</</;
+	$xml1 =~ s/>\s*</></g; 
+	$xml2 =~ s/>\s*</></g;
+	$xml1 =~ s/>\s*$/>/; 
+	$xml2 =~ s/>\s*$/>/;
 
-	return not( $xml1 cmp $xml2 );
+	return $xml1 eq $xml2;
 }
 
 # ============================================================
@@ -790,6 +801,12 @@ sub XmlUtf8Encode {
 __END__
 
 =back
+
+=head1 EXPORTS
+
+By default, the following methods are exported:
+
+  xml2pl, pl2xml, xml_compare, xml_identity
 
 =head1 BUGS AND DEPENDENCIES
 

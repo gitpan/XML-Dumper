@@ -1,10 +1,17 @@
 Revision history for Perl extension XML::Dumper.
 
-      A while back, there was a suggestion to use the file header rather
-      than the file extension '.tar.gz' or '.tgz' to detect tarballed
-      files, which is correct. Unfortunately, I lost the e-mail that
-      had the patch, so if the author of said e-mail or other interested
-      parties could re-submit the patch, I'll be glad to incorporate it.
+0.67  Tue Aug 19 02:45:55 PDT 2003
+    - Broke tests out to document the tests and group similar tests together.
+      Numbered tests reflect feature additions; named tests reflect bug
+      reports and patches.
+    - Finally incorporated GZip header signature test code by Richard Evans.
+      Thanks for your patience (and code!), Richard. It works great!
+    - Andreas Koenig corrected ownership issue; CPAN module now correctly
+      downloads the latest version of this module
+    - Corrected documentation which removes EXPORT_OK lie. Functional
+      version of xml2pl() and pl2xml() are, indeed, exported by default.
+    - Removed Credits section, preferring rather to credit people in the
+      blow-by-blow updates
 
 0.65  Mon Jul 21 14:07:17 PDT 2003
     - Applied patch sent it by Florian Hinzmann which documents profile.pl
@@ -85,16 +92,3 @@ Revision history for Perl extension XML::Dumper.
 0.02  Thu Oct 15 02:19:04 1998
     - original version; created by h2xs 1.18
 
-CREDITS
-
-Honza Holecek
-
-Peter S. May
-
-Chris Thorman E<lt>ct@ignitiondesign.comE<gt>
-
-L.M.Orchard E<lt>deus_x@pobox.comE<gt>
-
-DeWitt Clinton E<lt>dewitt@eziba.comE<gt>
-
-Niels Vegter
