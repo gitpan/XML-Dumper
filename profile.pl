@@ -34,6 +34,10 @@ print "$count loops of code took: ", timestr($time), "\n";
 
 __END__
 
+=head1 NAME
+
+profile.pl - test how quickly XML::Dumper runs on your system
+
 =head1 Results
 
 =head2 Dumping Perl to XML

@@ -139,11 +139,11 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity dtd );
-our $VERSION = '0.63'; 
+our $VERSION = '0.65'; 
 
 our $COMPRESSION_AVAILABLE;
 
-INIT {
+BEGIN {
 	eval { require Compress::Zlib; };
 	if( $@ ) {
 		$COMPRESSION_AVAILABLE = undef;

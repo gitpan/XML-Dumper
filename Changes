@@ -6,76 +6,90 @@ Revision history for Perl extension XML::Dumper.
       had the patch, so if the author of said e-mail or other interested
       parties could re-submit the patch, I'll be glad to incorporate it.
 
+0.65  Mon Jul 21 14:07:17 PDT 2003
+    - Applied patch sent it by Florian Hinzmann which documents profile.pl
+      for the Debian packaging tool lintian. The profile.pl script now
+      has a =head NAME POD section.
+
+0.64  Sat Jul  5 19:22:30 PDT 2003
+    - Changed INIT optional Compression::Zlib dependency to BEGIN block
+      for mod_perl compatibility. Startup now issues no errors due to
+      XML::Dumper.
+
 0.63  Wed Jun 18 14:18:00 PDT 2003
     - Added 'use warnings' pragma and applied patch to bugs. Both the bug 
       report and the patch were supplied by Honza Holecek. Thanks, Honza!
 
 0.62  Sun Jan 12 19:48:12 PST 2003
     - Added the ability to dump a DTD for a valid XML document. Investigating
-	  more interesting forms of XML data (given DTD or Schema, slurp XML into
-	  Perl and back). Corrected errors in POD, Changes, README, and tests.
+      more interesting forms of XML data (given DTD or Schema, slurp XML into
+      Perl and back). Corrected errors in POD, Changes, README, and tests.
 
 0.60  Tue Jan  7 22:00:15 PST 2003
     - Responded to some old comments by crazyinsomniac, from Perl Monks. 
-	  The module now dumps and undumps with or without the OO-ish interface. 
-	  I might add the punDump feature, but the feedback from pun-loving Perl 
-	  monks may lead to pun-demonium.
+      The module now dumps and undumps with or without the OO-ish interface. 
+      I might add the punDump feature, but the feedback from pun-loving Perl 
+      monks may lead to pun-demonium.
 
 0.59  Thu Nov 28 22:43:51 PST 2002
-	- Responded to bug report by Peter S. May. XML::Dumper now correctly
-	  interprets undef() values as being undefined as opposed to being a zero-
-	  length string. 
-	- Added capability to distinguish the difference between a reference to
-	  a zero-length string and a reference to an undefined value. While the
-	  use model escapes me at the moment, it was the consistent and right
-	  thing to do.
-	- Moved credits and changes from perldoc to Changes file.
+    - Responded to bug report by Peter S. May. XML::Dumper now correctly
+      interprets undef() values as being undefined as opposed to being a zero-
+      length string. 
+    - Added capability to distinguish the difference between a reference to
+      a zero-length string and a reference to an undefined value. While the
+      use model escapes me at the moment, it was the consistent and right
+      thing to do.
+    - Moved credits and changes from perldoc to Changes file.
 
 0.58  Thu Nov 28 13:22:18 PST 2002
-	- Added optional feature to read and write zlib-compressed XML. Added
-	  optional dependency to Compress::Zlib.
+    - Added optional feature to read and write zlib-compressed XML. Added
+      optional dependency to Compress::Zlib.
 
 0.57
-	- Responded to bug report by Niels Vegter. Code now better handles literal
-	  scalar references. 
-	- Changed the rest of the test suite to scale better, using some more of 
-	  the features of Test::Harness
+    - Responded to bug report by Niels Vegter. Code now better handles literal
+      scalar references. 
+    - Changed the rest of the test suite to scale better, using some more of 
+      the features of Test::Harness
 
 0.56
-	- Added file reading and writing features
+    - Added file reading and writing features
 
 0.55
-	- Removed documentation of non-implemented code, fixed MANIFEST errors.
-	  Fixed false dependency on Data::Dumper
+    - Removed documentation of non-implemented code, fixed MANIFEST errors.
+      Fixed false dependency on Data::Dumper
 
 0.54
-	- Added ability to handle soft referenced callbacks
+    - Added ability to handle soft referenced callbacks
 
 0.53
-	- Added ability to handle circular references
+    - Added ability to handle circular references
 
 0.5
-	- XML::Dumper changes ownership from Jon Eizenzopf to Mike Wong
-	- Added ability to dump and undump Perl objects
+    - XML::Dumper changes ownership from Jon Eizenzopf to Mike Wong
+    - Added ability to dump and undump Perl objects
 
 0.4   Sun Jun 20 02:29:12 EDT 1999
-	- Added code to balance the XML output in nested hashes. Thanks
-	  to L.M. Orchard and DeWitt Clinton for reporting the bug.
+    - Added code to balance the XML output in nested hashes. Thanks
+      to L.M. Orchard and DeWitt Clinton for reporting the bug.
 
 0.3   Mon Jan 11 03:23:08 EST 1999
-        - updated example scripts
+    - updated example scripts
 
 0.2   Sat Jan  9 03:47:05 EST 1999
-	- Updated routine to encode characters in x80-xFF range to Unicode.
-          Also added encoding for complete set of pre-declared entities.
+    - Updated routine to encode characters in x80-xFF range to Unicode.
+      Also added encoding for complete set of pre-declared entities.
 
 0.1   Sat Jan  9 03:43:19 EST 1999
-	- Added undumper routines from Chris Thorman <ct@ignitiondesign.com>
+    - Added undumper routines from Chris Thorman <ct@ignitiondesign.com>
 
 0.02  Thu Oct 15 02:19:04 1998
-	- original version; created by h2xs 1.18
+    - original version; created by h2xs 1.18
 
 CREDITS
+
+Honza Holecek
+
+Peter S. May
 
 Chris Thorman E<lt>ct@ignitiondesign.comE<gt>
 
