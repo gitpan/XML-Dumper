@@ -7,19 +7,17 @@ use strict;
 use XML::Dumper;
 
 # MAIN
-# build a reference to an array of hashes
-my $data = [
-	    {
-		first => 'Jonathan',
-		last => 'Eisenzopf',
-		email => 'eisen@pobox.com'
-		},
-	    {
-		first => 'Larry',
-		last => 'Wall',
-		email => 'larry@wall.org'
-		}
-	    ];
+my $data = {
+          'cat' => 'hat',
+          'musak' => {
+                       'movie' => {
+                                    'Austin Powers' => 'Yeah Baby!'
+                                  },
+                       'primus' => 'sucks',
+                       'jerry' => 'was a race car driver'
+                     },
+          'foo' => 'bar'
+        };
 
 # Dump Perl to XML
 # create new instance of XML::Dumper

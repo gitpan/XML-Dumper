@@ -9,7 +9,7 @@ BEGIN {
     use strict;
     use vars qw($VAR1 $VERSION);
     use Data::Dumper;
-    $VERSION = '0.3'; 
+    $VERSION = '0.4'; 
 }
 
 sub new {
@@ -49,6 +49,7 @@ sub Tree2XML {
 	    $string .= "\n" . " " x $indent . "<item key=\"" . &QuoteXMLChars($key) . "\">";
 	    if (ref($ref->{$key})) {
 		$string .= &Tree2XML($ref->{$key}, $indent+1);
+		$string .= "\n" . " " x $indent . "</item>";
 	    } else {
 		$string .= &QuoteXMLChars($ref->{$key}) . "</item>";
 	    }
@@ -246,6 +247,7 @@ END_TEST4
  </array>
 </perldata>
 END_TEST5
+
 					];
 
 	my $TestNum;
@@ -280,8 +282,6 @@ END_TEST5
 
 
 
-
-
 1;
 __END__
 
@@ -293,6 +293,7 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
 
  # Convert Perl code to XML
  use XML::Dumper;
+ my $dump = new XML::Dumper;
  $data = [
           {
             first => 'Jonathan',
@@ -307,11 +308,19 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
 	 ];
  $xml =  $dump->pl2xml($perl);
 
+
  # Convert XML to Perl code
- use XML::Parser; 
  use XML::Dumper;
- $Tree = $parser->parsefile($xmlfile); 
- # print the results
+ my $dump = new XML::Dumper; 
+
+ # some XML
+ my $xml = <<XML;
+<perldata>
+ <scalar>foo</scalar>
+</perldata>
+XML
+
+ # load Perl data structure from dumped XML
  $data = $dump->xml2pl($Tree);
 
 =head1 DESCRIPTION
@@ -326,11 +335,13 @@ XML::Dumper::xml2pl
 
 =head1 AUTHOR
 
-Jonathan Eisenzopf, eisen@pobox.com
+Jonathan Eisenzopf <eisen@pobox.com>
 
 =head1 CREDITS
 
 Chris Thorman <ct@ignitiondesign.com>
+L.M.Orchard <deus_x@pobox.com>
+DeWitt Clinton <dewitt@eziba.com>
 
 =head1 SEE ALSO
 

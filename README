@@ -3,12 +3,16 @@ This package is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 NAME
-XML::Dumper Version 0.3
+XML::Dumper Version 0.4
 
 DESCRIPTION
 XML::Dumper dumps Perl data to a structured XML format.
 XML::Dumper can also read XML data that was previously dumped
 by the module and convert it back to Perl.
+
+This might be useful for dumping Perl objects to files
+using an XML format that can be reloaded or accessed by
+other programs. Maybe even other languages.
 
 Feel free to contact me at eisen@pobox.com if you have 
 problems and/or suggestions.
@@ -24,3 +28,5 @@ make install
 
 CREDITS
 Chris Thorman <ct@ignitiondesign.com>
+L.M.Orchard <deus_x@pobox.com>
+DeWitt Clinton <dewitt@eziba.com>

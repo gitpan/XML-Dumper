@@ -10,12 +10,16 @@ use XML::Dumper;
 use Data::Dumper;
 
 # MAIN
+# get file from command line
+die "Usage: xml2pl <xml dumped file>\n" unless $ARGV[0] && -e $ARGV[0];
+my $file = $ARGV[0];
+
 # undump XML to perl   
 # create new parser instance
 my $parser = new XML::Parser(Style => 'Tree');
 
 # parse the file into a tree
-my $tree = $parser->parsefile("members.xml");
+my $tree = $parser->parsefile($file);
 
 # create new instance of XML::Dumper
 my $dump = new XML::Dumper;
