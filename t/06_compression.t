@@ -31,6 +31,7 @@ sub check( $ ) {
 
 	if( not $COMPRESSION_AVAILABLE ) {
 		skip( 1, 'Compress::Zlib not installed; compression feature disabled' );
+		return;
 	}
 
 	my $gz = Compress::Zlib::gzopen( 't/data/compression.xml.gz', 'rb' );

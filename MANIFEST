@@ -12,6 +12,7 @@ t/04_callbacks.t
 t/05_file_io.t
 t/06_compression.t
 t/07_dtd.t
+t/08_utf8.t
 t/handle_undef.t
 t/oo_style.t
 t/scalar_literals.t

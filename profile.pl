@@ -4,80 +4,87 @@ use XML::Dumper;
 use Benchmark qw( timeit timestr );
 
 print
-	"This is a test to see how quickly XML::Dumper runs on your system.\n",
-	"This may take anywhere from a few seconds to a few minutes.\n",
-	"(For a 1.6 GHz Pentium 4, 512 MB RAM system, it takes a little over 17 seconds\n",
-	"for 10,000 (the default) iterations.)\n\n";
+	"This is a test to see how quickly XML::Dumper runs on your system. \n",
+	"This will take a few minutes\n\n";
 
-my $count = 10000;
+my $count = 100;
+my $data = [];
+my $timemax = 0;
+my $timemin = 100;
 
-my $time = timeit( $count, '
-  my $perl = [
-    {
-      fname		=> "Fred",
-      lname		=> "Flintstone",
-      residence	=> "Bedrock"
-    },
-    {
-      fname		=> "Barney",
-      lname		=> "Rubble",
-      residence	=> "Bedrock"
-    }
-  ];
+for my $size ( qw( 1 10 20 50 100 200 500 1000 ))  {
+	my $perl = [ map {{ id => $_, data => rand( 1000 ), uncertainty => rand( 100 ) }} ( 0 .. $size ) ];
 
-  my $dump = new XML::Dumper;
-  my $xml = $dump->pl2xml( $perl );
-  my $pl = $dump->xml2pl( $xml );
-' );
+	print "Testing XML of size: $size...";
+	my $t = timeit( $count, sub {
+			$xml	= pl2xml( $perl );
+			$pl		= xml2pl( $xml );
+		}
+	);
+	my $time = int( timestr( $t ))/$count;
 
-print "$count loops of code took: ", timestr($time), "\n";
+	print timestr( $t ), " ($time each)\n";
+	
+	$timemax = $time > $timemax ? $time : $timemax;
+	$timemin = $time < $timemin ? $time : $timemin;
+
+	push @$data, {
+		size	=> $size,
+		time	=> $time,
+		count	=> $count
+	};
+}
+
+print "\n\n";
+
+($timemax, $timemin) = ( log10( $timemax ), log10( $timemin ) );
+
+my $range = $timemax - $timemin;
+my $v_size = $range/20;
+my $v_span = $timemax;
+
+print "time (log s)\n";
+while( $v_span >= $timemin ) {
+	printf( "%8.4f (%4.2f) |", $v_span, 10**$v_span );
+	foreach( @$data ) {
+		print log10( $_->{ time } ) >= $v_span ? "*    " : "     ";
+	}
+	print "\n";
+	$v_span -= $v_size;
+}
+print '-' x 80, "\n";
+print "                 ";
+foreach( @$data ) {
+	printf( "%-4d ", $_->{ size } );
+}
+print "\n\n";
+
+my @stats = reverse @$data;
+my $first = shift @stats;
+my $sum = $first->{ time }/$first->{ size };
+my $count = 1;
+
+foreach( @stats ) { 
+	$time = $_->{ time } / $_->{ size };
+
+	# Skip outliers
+	next if( $time <= $sum * 0.5 || $time >= $sum * 2 );
+
+	$sum += $time;
+	$count++;
+}
+
+printf( "%-02.6f seconds per XML record size.\n\n", $sum/$count );
+
+sub log10 {
+	my $num = shift;
+	return -2 if $num == 0;
+	return log($num)/log(10);
+}
 
 __END__
 
 =head1 NAME
 
 profile.pl - test how quickly XML::Dumper runs on your system
-
-=head1 Results
-
-=head2 Dumping Perl to XML
-
-my $time = timeit( $count, '
-  my $perl = [
-    {
-      fname		=> "Fred",
-      lname		=> "Flintstone",
-      residence	=> "Bedrock"
-    },
-    {
-      fname		=> "Barney",
-      lname		=> "Rubble",
-      residence	=> "Bedrock"
-    }
-  ];
-  my $dump = new XML::Dumper;
-  my $xml = $dump->pl2xml( $perl );
-' );
-
-=head2 Dumping XML to Perl;
-
-my $time = timeit( $count, '
-  my $perl = [
-    {
-      fname		=> "Fred",
-      lname		=> "Flintstone",
-      residence	=> "Bedrock"
-    },
-    {
-      fname		=> "Barney",
-      lname		=> "Rubble",
-      residence	=> "Bedrock"
-    }
-  ];
-
-  my $dump = new XML::Dumper;
-  my $xml = $dump->pl2xml( $perl );
-  my $pl = $dump->xml2pl( $xml );
-' );
-
 

@@ -1,3 +1,15 @@
+
+package Scalar_object;
+sub new { my ($class) = map { ref || $_ } shift; return bless \$_, $class; }
+
+package Hash_object;
+sub new { my ($class) = map { ref || $_ } shift; return bless {}, $class; }
+
+
+package Array_object;
+sub new { my ($class) = map { ref || $_ } shift; return bless [], $class; }
+
+package main;
 use strict;
 use warnings;
 

@@ -139,14 +139,14 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
-our $VERSION = '0.67'; 
+our $VERSION = '0.70'; 
 
 our $COMPRESSION_AVAILABLE;
 
 BEGIN {
 	eval { require Compress::Zlib; };
 	if( $@ ) {
-		$COMPRESSION_AVAILABLE = undef;
+		$COMPRESSION_AVAILABLE = 0;
 	} else {
 		$COMPRESSION_AVAILABLE = 1;
 	}
@@ -313,13 +313,13 @@ sub dump {
 			# ----------------------------------------
 			if( /^HASH$/ ) {
 			# ----------------------------------------
+				$self->{ xml }{ $address }++ if( $address );
 				my $type = 
 					"<hashref". 
 					($class ? " blessed_package=\"$class\"" : '' ). 
-					($address && $self->{ xml }{ $address } > 1 ? " memory_address=\"$address\"" : '' ).
+					($address && $self->{ xml }{ $address } ? " memory_address=\"$address\"" : '' ).
 					">";
 				$string = "\n" . " " x $indent . $type;
-				$self->{ xml }{ $address }++ if( $address );
 				if( not $reused ) {
 					$indent++;
 					foreach my $key (sort keys(%$ref)) {
@@ -427,7 +427,7 @@ Usage: See Synopsis
 		if( $file =~ /\.xml\.gz$/i ) {
 			if( $COMPRESSION_AVAILABLE ) {
 				my $compressed_xml = Compress::Zlib::memGzip( $xml ) or die "Failed to compress xml $!";
-				open FILE, ">$file" or die "Can't open '$file' for writing $!";
+				open FILE, ">:utf8", $file or die "Can't open '$file' for writing $!";
 				binmode FILE;
 				print FILE $compressed_xml;
 				close FILE;
@@ -437,11 +437,12 @@ Usage: See Synopsis
 				$uncompressed_file =~ s/\.gz$//i;
 				warn "Compress::Zlib not installed. Saving '$file' as '$uncompressed_file'\n";
 
-				open FILE, ">$uncompressed_file" or die "Can't open '$uncompressed_file' for writing $!";
+				open FILE, ">:utf8", $uncompressed_file or die "Can't open '$uncompressed_file' for writing $!";
 				print FILE $xml;
 				close FILE;
 			}
 		} else {
+			no warnings; # to shut Perl up about Wide characters for UTF8 output
 			open FILE, ">$file" or die "Can't open '$file' for writing $!";
 			print FILE $xml;
 			close FILE;
@@ -530,6 +531,15 @@ sub undump {
 
 				$self->{ perldata }{ $address } = $ref if( $address );
 				if( $class ) {
+					unless( int( eval( "\%$class"."::")) ) {
+						eval {
+							require $class;
+						};
+						if( $@ ) {
+							warn $@;
+						}
+					}
+					
 					bless $ref, $class;
 					if( defined $callback && $ref->can( $callback ) ) {
 						$ref->$callback();
@@ -568,6 +578,15 @@ sub undump {
 					}
 				}
 				if( $class ) {
+					unless( int( eval( "\%$class"."::")) ) {
+						eval {
+							require $class;
+						};
+						if( $@ ) {
+							warn $@;
+						}
+					}
+
 					bless $ref, $class;
 					if( defined $callback && $ref->can( $callback ) ) {
 						$ref->$callback();
@@ -602,6 +621,15 @@ sub undump {
 					}
 				}
 				if( $class ) {
+					unless( int( eval( "\%$class"."::")) ) {
+						eval {
+							require $class;
+						};
+						if( $@ ) {
+							warn $@;
+						}
+					}
+
 					bless $ref, $class;
 					if( defined $callback && $ref->can( $callback ) ) {
 						$ref->$callback();
@@ -636,7 +664,6 @@ sub quote_xml_chars {
     s/>/&gt;/g;
     s/'/&apos;/g;
     s/"/&quot;/g;
-    s/([\x80-\xFF])/&XmlUtf8Encode(ord($1))/ge;
     return $_;
 }
 
@@ -776,25 +803,6 @@ method is also exported by default.
 	my $xml2 = shift;
 
 	return ( $xml1 eq $xml2 );
-}
-
-# ============================================================
-sub XmlUtf8Encode {
-# ============================================================
-# borrowed from XML::DOM
-    my $n = shift;
-    if ($n < 0x80) {
-	return chr ($n);
-    } elsif ($n < 0x800) {
-        return pack ("CC", (($n >> 6) | 0xc0), (($n & 0x3f) | 0x80));
-    } elsif ($n < 0x10000) {
-        return pack ("CCC", (($n >> 12) | 0xe0), ((($n >> 6) & 0x3f) | 0x80),
-                     (($n & 0x3f) | 0x80));
-    } elsif ($n < 0x110000) {
-        return pack ("CCCC", (($n >> 18) | 0xf0), ((($n >> 12) & 0x3f) | 0x80),
-                     ((($n >> 6) & 0x3f) | 0x80), (($n & 0x3f) | 0x80));
-    }
-    return $n;
 }
 
 1;
