@@ -1,38 +1,26 @@
 Copyright (c) 1998 Jonathan Eisenzopf. All rights reserved.
-
 This package is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 NAME
-XML::Dumper Version 0.01
-
-ACKNOWLEDGEMENTS
-Larry Wall wrote the original XML::Parser which uses
-James Clark's expat XML parser. Clark Cooper is the present
-maintainer of the XML::Parser module, and has been a
-great help.
+XML::Dumper Version 0.3
 
 DESCRIPTION
-This is a simple little package I whipped up for an article
-for TPJ. Its purpose is to experiment with converting Perl
-data structures to XML and converting XML to perl data 
-structures. 
+XML::Dumper dumps Perl data to a structured XML format.
+XML::Dumper can also read XML data that was previously dumped
+by the module and convert it back to Perl.
 
 Feel free to contact me at eisen@pobox.com if you have 
 problems and/or suggestions.
 
 REQUIREMENTS
-This module requires the XML::Parser module. The latest
-version should be available at:
-http://www.netheaven.com/~coopercc/xmlparser/intro.html
+This module requires version 2.16 or greater of the XML::Parser module.
+The latest version is available at any CPAN archive.
 
 INSTALLATION
 perl Makefile.PL
 make
 make install
 
-EXAMPLES
-There are examples in the examples/ directory. Get it?
-
-HISTORY
-
+CREDITS
+Chris Thorman <ct@ignitiondesign.com>
