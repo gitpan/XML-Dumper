@@ -7,3 +7,4 @@ README
 t/01.t
 t/02.t
 t/data/01-11.xml
+t/data/01-12.xml.gz

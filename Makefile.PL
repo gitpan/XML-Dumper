@@ -1,8 +1,7 @@
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
+
 push(@extras,
-    AUTHOR        => 'Jonathan Eisenzopf <eisen@pobox.com>'
+    AUTHOR        => 'Mike Wong <mike_w3@pacbell.net>'
     ) if ($ExtUtils::MakeMaker::Version >= 5.4301);
 WriteMakefile(
     NAME	=> 'XML::Dumper',

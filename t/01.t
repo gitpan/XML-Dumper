@@ -4,11 +4,38 @@ use strict;
 use XML::Dumper;
 use Test::Harness;
 
-BEGIN { $| = 1; print "1..11\n"; }
+BEGIN { $| = 1; print "1..12\n"; }
+
+our $COMPRESSION_AVAILABLE;
+
+INIT {
+	eval { require Compress::Zlib; };
+	if( $@ ) {
+		$COMPRESSION_AVAILABLE = undef;
+	} else {
+		$COMPRESSION_AVAILABLE = 1;
+	}
+}
 
 open TEST11, "t/data/01-11.xml" or die "Can't open 't/data/01-11.xml' for reading $!";
 my $test_11_xml = join "", <TEST11>;
 close TEST11;
+
+my $test_12_xml;
+if( $COMPRESSION_AVAILABLE ) {
+	
+	my $gz = Compress::Zlib::gzopen( "t/data/01-12.xml.gz", "rb" );
+	my @xml;
+	my $buffer;
+	while( $gz->gzread( $buffer ) > 0 ) {
+		push @xml, $buffer;
+	}
+	$gz->gzclose();
+	$test_12_xml = join "", @xml;
+
+} else {
+	$test_12_xml = 'skip';
+}
 
 my $TestRuns = [
 		 
@@ -121,11 +148,14 @@ END_TEST10
 # ===== FILE READING AND WRITING
 $test_11_xml,
 
+# ===== COMPRESSED FILE READING AND WRITING
+$test_12_xml,
+
 ];
 
 my $test_num;
 my $test_xml;
-foreach $test_xml (@$TestRuns)
+TEST: foreach $test_xml (@$TestRuns)
 {
 	$test_num++;
 
@@ -133,21 +163,30 @@ foreach $test_xml (@$TestRuns)
 	my $perl;
 	my $xml;
 
-	TEST: {
+	DO_TEST: {
 		if( $test_num == 10 ) {
 			$perl = $Dumper->xml2pl($test_xml, "callback" );
 			$xml = $Dumper->pl2xml( $perl );
-			last TEST;
+			last DO_TEST;
 		}
 		if( $test_num == 11 ) {
 			$perl = $Dumper->xml2pl( 't/data/01-11.xml' );
 			$xml = $Dumper->pl2xml( $perl, 't/data/01-11.xml' );
-			last TEST;
+			last DO_TEST;
+		}
+		if( $test_num == 12 ) {
+			if( not $COMPRESSION_AVAILABLE ) {
+				print "ok $test_num # skip Compress::Zlib not installed, compression feature disabled.\n";
+				next TEST;
+			}
+			$perl = $Dumper->xml2pl( 't/data/01-12.xml.gz' );
+			$xml = $Dumper->pl2xml( $perl, 't/data/01-12.xml.gz' );
+			last DO_TEST;
 		}
 		DEFAULT: {
 			$perl = $Dumper->xml2pl($test_xml);
 			$xml = $Dumper->pl2xml( $perl );
-			last TEST;
+			last DO_TEST;
 		}
 	}
 	

@@ -8,12 +8,6 @@
 #                       |_|           
 # Perl module for dumping Perl objects from/to XML
 # ============================================================
-# 
-# Copyright (c) 1998 Jonathan Eisenzopf <eisen@pobox.com>
-# XML::Dumper is free software. You can redistribute it and/or
-# modify it under the same terms as Perl itself.
-#
-# ============================================================
 
 =head1 NAME
 
@@ -72,15 +66,26 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
 
   # ==== Convert an XML file to Perl code
   my $perl = $dump->xml2pl( $file );
+  
+  # ==== And serialize Perl code to an XML file
+  $dump->pl2xml( $perl, $file );
 
 =head1 DESCRIPTION
 
 XML::Dumper dumps Perl data to XML format. XML::Dumper can also read XML data 
-that was previously dumped by the module and convert it back to Perl. Perl
+that was previously dumped by the module and convert it back to Perl. You can
+use the module read the XML from a file and write the XML to a file. Perl
 objects are blessed back to their original packaging; if the modules are
 installed on the system where the perl objects are reconstituted from xml, they
 will behave as expected. Intuitively, if the perl objects are converted and
 reconstituted in the same environment, all should be well. And it is.
+
+Additionally, because XML benefits so nicely from compression, XML::Dumper
+understands gzipped XML files. It does so with an optional dependency on
+Compress::Zlib. So, if you dump a Perl variable with a file that has an
+extension of '.xml.gz', it will store and compress the file in XML format.
+Likewise, if you read a file with the extension '.xml.gz', it will uncompress
+the file in memory before parsing the XML back into a Perl variable.
 
 Another fine challenge that this module rises to meet is that it understands
 circular definitions. This includes doubly-linked lists, circular references,
@@ -105,7 +110,18 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( 'all' => [ qw( xml_compare xml_identity ) ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{ 'all' } } );
 our @EXPORT = qw( xml_compare xml_identity );
-our $VERSION = '0.57'; 
+our $VERSION = '0.59'; 
+
+our $COMPRESSION_AVAILABLE;
+
+INIT {
+	eval { require Compress::Zlib; };
+	if( $@ ) {
+		$COMPRESSION_AVAILABLE = undef;
+	} else {
+		$COMPRESSION_AVAILABLE = 1;
+	}
+}
 
 # ============================================================
 sub new {
@@ -178,16 +194,12 @@ sub dump {
 			# ----------------------------------------
 				my $type = 
 					"<scalarref". 
-					($class ? " blessed_package=\"$class\"" : '' ). 
-					($address ? " memory_address=\"$address\"" : '' ).
+					($class ? " blessed_package=\"$class\"" : '' ) . 
+					($address ? " memory_address=\"$address\"" : '' ) .
+					( defined $$ref ? '' : " defined=\"false\"" ) .
 					">";
 				$self->{ xml }{ $address }++ if( $address );
-				$string = 
-					"\n" . 
-					" " x $indent . 
-					$type . 
-					($reused ? '' : &quote_xml_chars($$ref)) . 
-					"</scalarref>";
+				$string = "\n" .  " " x $indent .  $type .  ($reused ? '' : &quote_xml_chars($$ref)) .  "</scalarref>";
 				last PERL_TYPE;
 			}
 
@@ -204,7 +216,12 @@ sub dump {
 				if( not $reused ) {
 					$indent++;
 					foreach my $key (sort keys(%$ref)) {
-						$string .= "\n" . " " x $indent . "<item key=\"" . &quote_xml_chars($key) . "\">";
+						my $type =
+							"<item " .
+							"key=\"" . &quote_xml_chars( $key ) . "\"" .
+							( defined $ref->{ $key } ? '' : " defined=\"false\"" ) .
+							">";
+						$string .= "\n" . " " x $indent . $type;
 						if (ref($ref->{$key})) {
 							$string .= $self->dump( $ref->{$key}, $indent+1);
 							$string .= "\n" . " " x $indent . "</item>";
@@ -231,7 +248,14 @@ sub dump {
 				if( not $reused ) {
 					$indent++;
 					for (my $i=0; $i < @$ref; $i++) {
-						$string .= "\n" . " " x $indent . "<item key=\"$i\">";
+						my $defined;
+						my $type =
+							"<item " .
+							"key=\"" . &quote_xml_chars( $i ) . "\"" .
+							( defined $ref->[ $i ] ? '' : " defined=\"false\"" ) .
+							">";
+
+						$string .= "\n" . " " x $indent . $type;
 						if (ref($ref->[$i])) {
 							$string .= $self->dump($ref->[$i], $indent+1);
 							$string .= "\n" . " " x $indent . "</item>";
@@ -249,10 +273,21 @@ sub dump {
     
     # ===== SCALAR
     } else {
-		$string .= "\n" . " " x $indent . "<scalar>" . &quote_xml_chars($ref) . "</scalar>";
+		my $type = 
+			"<scalar". 
+			( defined $ref ? '' : " defined=\"false\"" ) .
+			">";
+
+		$string .= "\n" . " " x $indent . $type . &quote_xml_chars($ref) . "</scalar>";
     }
     
     return($string);
+}
+
+# ============================================================
+sub perl2xml {
+# ============================================================
+	pl2xml( @_ );
 }
 
 # ============================================================
@@ -260,6 +295,8 @@ sub pl2xml {
 # ============================================================
 
 =item * pl2xml -
+
+(Also perl2xml(), for those who enjoy readability over brevity).
 
 Converts Perl data to XML. If a second argument is given, then the Perl data
 will be stored to disk as XML, using the second argument as a filename.
@@ -278,10 +315,28 @@ Usage: See Synopsis
 	my $xml = "<perldata>" . $self->dump( $ref, 1 ) . "\n</perldata>\n";
 
 	if( defined $file ) { 
-		open FILE, ">$file" or die "Can't open '$file' for writing $!";
-		print FILE $xml;
-		close FILE;
+		if( $file =~ /\.xml\.gz$/i ) {
+			if( $COMPRESSION_AVAILABLE ) {
+				my $compressed_xml = Compress::Zlib::memGzip( $xml ) or die "Failed to compress xml $!";
+				open FILE, ">$file" or die "Can't open '$file' for writing $!";
+				binmode FILE;
+				print FILE $compressed_xml;
+				close FILE;
 
+			} else {
+				my $uncompressed_file = $file;
+				$uncompressed_file =~ s/\.gz$//i;
+				warn "Compress::Zlib not installed. Saving '$file' as '$uncompressed_file'\n";
+
+				open FILE, ">$uncompressed_file" or die "Can't open '$uncompressed_file' for writing $!";
+				print FILE $xml;
+				close FILE;
+			}
+		} else {
+			open FILE, ">$file" or die "Can't open '$file' for writing $!";
+			print FILE $xml;
+			close FILE;
+		}
 	}
 	return $xml;
 }
@@ -295,9 +350,13 @@ sub undump {
 # a reference to a scalar, a hash, or an array. Hashes and arrays may 
 # themselves contain scalars, or references to scalars, or references to 
 # hashes or arrays, with the exception that scalar values are never 
-# "undef" because there's currently no way to represent undef in the dumped 
-# data.
+# "undef" because there's currently no way to represent undef in the 
+# dumped data.
 #
+# The key to understanding undump is to understand XML::Parser's
+# Tree parsing format:
+#
+# <tag name>, [ { <attributes }, '0', <[text]>, <[children tag-array pair value(s)]...> ]
 # ------------------------------------------------------------
 
 	my $self = shift;
@@ -305,7 +364,7 @@ sub undump {
 	my $callback = shift;
 
     my $ref = undef;
-    my $FoundScalar;
+    my $item;
 
 	# make Perl stop whining about deep recursion and soft references
 	no warnings; 
@@ -320,8 +379,12 @@ sub undump {
 			# ----------------------------------------
 			if( /^scalar$/ ) {
 			# ----------------------------------------
-			    ## Make a copy of the string
-			    $ref = $tree->[$i+1]->[2];
+			    $ref = defined $tree->[ $i+1 ][ 2 ] ? $tree->[ $i +1 ][ 2 ] : '';
+				if( exists $tree->[ $i+1 ][ 0 ]{ 'defined' } ) {
+					if( $tree->[ $i +1 ][ 0 ]{ 'defined' } =~ /false/i ) {
+						$ref = undef;
+					}
+				}
 			    last TREE;
 			}
 
@@ -349,8 +412,13 @@ sub undump {
 			# ----------------------------------------
 			if( /^scalarref/ ) {
 			# ----------------------------------------
-				## Make a ref to a copy of the string
-				$ref = \ "$tree->[$i+1]->[2]";
+			    $ref = defined $tree->[ $i+1 ][ 2 ] ? \ $tree->[ $i +1 ][ 2 ] : \'';
+				if( exists $tree->[ $i+1 ][ 0 ]{ 'defined' } ) {
+					if( $tree->[ $i +1 ][ 0 ]{ 'defined' } =~ /false/i ) {
+						$ref = \ undef;
+					}
+				}
+
 				$self->{ perldata }{ $address } = $ref if( $address );
 				if( $class ) {
 					bless $ref, $class;
@@ -367,11 +435,27 @@ sub undump {
 				$ref = {};
 				$self->{ perldata }{ $address } = $ref if( $address );
 				for (my $j = 1; $j < $#{$tree->[$i+1]}; $j+=2) {
-					next unless $tree->[$i+1]->[$j] eq 'item';
+					next unless $tree->[$i+1][$j] eq 'item';
 					my $item_tree = $tree->[$i+1][$j+1];
 					if( exists $item_tree->[0]{ key } ) {
 						my $key = $item_tree->[ 0 ]{ key };
-						$ref->{$key} = $self->undump($item_tree, $callback);
+						if( exists $item_tree->[ 0 ]{ 'defined' } ) {
+							if( $item_tree->[ 0 ]{ 'defined' } =~ /false/ ) {
+								$ref->{ $key } = undef;
+								next;
+							}
+						}
+						# ===== XML::PARSER IGNORES ZERO-LENGTH STRINGS
+						# It indicates the presence of a zero-length string by
+						# not having the array portion of the tag-name/array pair
+						# values be of length 1. (Which is to say it captures only
+						# the attributes of the tag and acknowledges that the tag
+						# is an empty one.
+						if( int( @{ $item_tree } ) == 1 ) {
+							$ref->{ $key } = '';
+							next;
+						}
+						$ref->{ $key } = $self->undump( $item_tree, $callback );
 					}
 				}
 				if( $class ) {
@@ -389,11 +473,23 @@ sub undump {
 				$ref = [];
 				$self->{ perldata }{ $address } = $ref if( $address );
 				for (my $j = 1; $j < $#{$tree->[$i+1]}; $j+=2) {
-					next unless $tree->[$i+1]->[$j] eq 'item';
+					next unless $tree->[$i+1][$j] eq 'item';
 					my $item_tree = $tree->[$i+1][$j+1];
 					if( exists $item_tree->[0]{ key } ) {
 						my $key = $item_tree->[0]{ key };
-						$ref->[$key] = $self->undump($item_tree, $callback);
+						if( exists $item_tree->[ 0 ]{ 'defined' } ) {
+							if( $item_tree->[ 0 ]{ 'defined' } =~ /false/ ) {
+								$ref->[ $key ] = undef;
+								next;
+							}
+						}
+						# ===== XML::PARSER IGNORES ZERO-LENGTH STRINGS
+						# See note above.
+						if( int( @{ $item_tree } ) == 1 ) {
+							$ref->[ $key ] = '';
+							next;
+						}
+						$ref->[ $key ] = $self->undump( $item_tree, $callback );
 					}
 				}
 				if( $class ) {
@@ -405,8 +501,10 @@ sub undump {
 			    last TREE;
 			}
 
-			if( /^0$/ ) {
-	    		$FoundScalar = $tree->[$i + 1] unless defined $FoundScalar;
+			# ----------------------------------------
+			if( /^0$/ ) { # SIMPLE SCALAR
+			# ----------------------------------------
+				$item = $tree->[$i + 1];
 			}
 		}
     }
@@ -414,7 +512,7 @@ sub undump {
     ## If $ref is not set at this point, it means we've just
     ## encountered a scalar value directly inside the item tag.
     
-    $ref = $FoundScalar unless defined($ref);
+    $ref = $item unless defined( $ref );
 
     return ($ref);
 }
@@ -433,10 +531,18 @@ sub quote_xml_chars {
 }
 
 # ============================================================
+sub xml2perl {
+# ============================================================
+	xml2pl( @_ );
+}
+
+# ============================================================
 sub xml2pl {
 # ============================================================
 
 =item * xml2pl -
+
+(Also xml2perl(), for those who enjoy readability over brevity.)
 
 Converts XML to a Perl datatype. If this method is given a second argument, 
 XML::Dumper will use the second argument as a callback (if possible). If
@@ -465,14 +571,32 @@ blissful ignorance).
 	$self->init;
 
 	if( $xml !~ /\</ ) {
-		if( -e $xml ) {
-			open FILE, $xml or die "Can't open file '$xml' for reading $!";
-			my @xml = <FILE>;
-			close FILE;
-			$xml = join "", @xml;
+		my $file = $xml;
+		if( -e $file ) {
+			if( $file =~ /\.xml\.gz$/ ) {
+				if( $COMPRESSION_AVAILABLE ) {
+					my $gz = Compress::Zlib::gzopen( $file, "rb" );
+					my @xml;
+					my $buffer;
+					while( $gz->gzread( $buffer ) > 0 ) {
+						push @xml, $buffer;
+					}
+					$gz->gzclose();
+					$xml = join "", @xml;
+
+				} else {
+					die "Compress::Zlib is not installed. Cannot read gzipped file '$file'";
+				}
+			} else {
+
+				open FILE, $file or die "Can't open file '$file' for reading $!";
+				my @xml = <FILE>;
+				close FILE;
+				$xml = join "", @xml;
+			}
 
 		} else {
-			die "'$xml' does not exist as a file and is not XML.\n";
+			die "'$file' does not exist as a file and is not XML.\n";
 		}
 	}
 
@@ -505,8 +629,10 @@ other, or identical. This method is exported by default.
 	my $xml1 = shift;
 	my $xml2 = shift;
 
-	$xml1 =~ s/\smemory_address="\dx[A-Za-z0-9]+"//g;
-	$xml2 =~ s/\smemory_address="\dx[A-Za-z0-9]+"//g;
+	$xml1 =~ s/(<[^>]*)\smemory_address="\dx[A-Za-z0-9]+"([^<]*>)/$1$2/g;
+	$xml2 =~ s/(<[^>]*)\smemory_address="\dx[A-Za-z0-9]+"([^<]*>)/$1$2/g;
+	$xml1 =~ s/(<[^>]*)\sdefined=\"false\"([^<]>)/$1$2/g; # For backwards 
+	$xml2 =~ s/(<[^>]*)\sdefined=\"false\"([^<]>)/$1$2/g; # compatibility
 
 	return not( $xml1 cmp $xml2 );
 }
@@ -557,9 +683,6 @@ __END__
 
 =head1 BUGS AND DEPENDENCIES
 
-This module is guilty of several cardinal sins, not the least of which is
-a change of API.
-
 XML::Dumper has changed API since 0.4. While this violates most every benefit
 of object-oriented programming, I felt it was necessary, as the functions
 simply didn't work as advertised. That is, xml2pl really didnt accept xml
@@ -580,43 +703,23 @@ XML::Parser itself relies on Clark Cooper's Expat implementation in Perl,
 which in turn requires James Clark's expat package itself. See the
 documentation for XML::Parser for more information.
 
-=head1 REVISIONS
+=head1 REVISIONS AND CREDITS
 
-0.57    Responded to bug report by Niels Vegter. Code now better handles
-literal scalar references. Changed the test suite to scale better, using
-some more of the features of Test::Harness.
-
-0.56	Added file reading and writing features
-
-0.55	Removed documentation of non-implemented code, fixed MANIFEST errors. 
-Fixed false dependency on Data::Dumper.
-
-0.54	Added ability to handle soft referenced callbacks
-
-0.53	Added ability to handle circular references
-
-0.50	Added ability to dump and undump objects
-
-0.40	I (Mike Wong) downloaded XML::Dumper from CPAN
+See Changes file.
 
 =head1 CURRENT MAINTAINER
 
 Mike Wong E<lt>mike_w3@pacbell.netE<gt>
 
+XML::Dumper is free software. You can redistribute it and/or
+modify it under the same terms as Perl itself.
+
 =head1 ORIGINAL AUTHOR
 
 Jonathan Eisenzopf E<lt>eisen@pobox.comE<gt>
-
-=head1 CREDITS
-
-Chris Thorman E<lt>ct@ignitiondesign.comE<gt>
-
-L.M.Orchard E<lt>deus_x@pobox.comE<gt>
-
-DeWitt Clinton E<lt>dewitt@eziba.comE<gt>
-
+ 
 =head1 SEE ALSO
 
-perl(1), XML::Parser(3).
+perl(1), XML::Parser(3). Compress::Zlib(3)
 
 =cut
