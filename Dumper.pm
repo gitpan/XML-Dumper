@@ -92,14 +92,13 @@ require 5.005_62;
 use strict;
 
 require Exporter;
-use Data::Dumper;
 use XML::Parser;
 
 our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( 'all' => [ qw( xml_compare xml_identity ) ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{ 'all' } } );
 our @EXPORT = qw( xml_compare xml_identity );
-our $VERSION = '0.54'; 
+our $VERSION = '0.55'; 
 
 # ============================================================
 sub new {
@@ -440,44 +439,6 @@ be allowed, I'll do it. If you don't know what the null-string method is,
 curse The Damian for having invoked such a beast, and move along in
 blissful ignorance).
 
-Potential candidates for future callback methodology include a hash-
-reference that offers a per-class method invocation:
-
-	# ===== THIS DOES NOT WORK, BUT IT SOON MIGHT
-
-	my $callback = {
-		'Class_A' => 'does_this',
-		'Class_B' => 'does_that',
-		'Class_C' => 'does_something_else',
-		'__ALL__' => '' 
-	};
-
-	$dump->xml2pl( $xml, $callback );
-
-And of course, the ultimate would be code reference, with the name
-of the class and the object itself being the first two references given
-to the code reference:
-
-	# ===== THIS DOES NOT WORK EITHER, BUT ONE CAN DREAM
-
-	my $callback = sub {
-		my $class = shift;
-		my $object = shift;
-
-		if( $class =~ /^Class_A$/ ) {
-			$object->does_this();
-			return $object;
-		}
-
-		if( $object->can( 'name' ) ) {
-			if( $object->name eq 'An Instance of Class B' ) {
-				$object->does_that();
-			}
-		}
-	}
-				
-	$dump->xml2pl( $xml, $callback );
-
 =cut
 
 # ------------------------------------------------------------
@@ -585,7 +546,6 @@ either, so at least I'm in somewhat good company.
 
 XML::Dumper requires two perl modules, both available from CPAN
 
-	Data::Dumper
 	XML::Parser
 
 XML::Parser itself relies on Clark Cooper's Expat implementation in Perl,
@@ -593,6 +553,9 @@ which in turn requires James Clark's expat package itself. See the
 documentation for XML::Parser for more information.
 
 =head1 REVISIONS
+
+0.55	Removed documentation of non-implemented code, fixed MANIFEST
+		errors. Fixed false dependency on Data::Dumper.
 
 0.54	Added ability to handle soft referenced callbacks
 
