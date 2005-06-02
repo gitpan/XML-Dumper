@@ -1,4 +1,21 @@
 Revision history for Perl extension XML::Dumper.
+
+0.73  Thu Jun  2 01:57:54 PDT 2005
+    - Included a patch developed by Lasse which corrected a stupid 
+      but subtle mistake on my part on requiring modules. Thanks to
+      Lasse for the patch and his incredible patience.
+
+0.72  Thu Jun  2 01:43:35 PDT 2005
+    - Addressed an issue brought up by Emery Ford where intermediate Perl
+      data was generating not well-formed XML due to control characters.
+      XML::Dumper now filters out control characters. IF YOU NEED
+      CONTROL CHARACTERS OR OTHER NON-TEXT INFORMATION, BE SURE TO
+      ENCODE THE INFORMATION. Thanks to Emery for the submitted patch.
+
+    - I've survived my first year of graduate school and will dig up all 
+      those patches that people have submitted to me. Sorry if you've
+      tried to get a hold of me over this past year, it's been busy!
+
 0.71  Mon Feb  2 22:45:33 PST 2004
     - Fixed a backwards-compatibility issue with 0.40 and <hash> vs. <hashref>
       bug report by Jon Lapham, who also suggested the fix. <hash> is still

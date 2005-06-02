@@ -1,7 +1,7 @@
 Changes
 Dumper.pm
-MANIFEST
 Makefile.PL
+MANIFEST
 profile
 README
 t/00_syntax.t
@@ -15,8 +15,14 @@ t/07_dtd.t
 t/08_utf8.t
 t/09_repeated_references.t
 t/10_backwards_compatible.t
+t/11_control_characters.t
+t/12_class_loading.t
+t/classes/Array_object.pm
+t/classes/Hash_object.pm
+t/classes/Scalar_object.pm
+t/data/compression.xml.gz
+t/data/file.xml
 t/handle_undef.t
 t/oo_style.t
 t/scalar_literals.t
-t/data/file.xml
-t/data/compression.xml.gz
+t/utf8_test.xml

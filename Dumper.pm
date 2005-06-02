@@ -139,7 +139,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
-our $VERSION = '0.71'; 
+our $VERSION = '0.73'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -532,9 +532,7 @@ sub undump {
 				$self->{ perldata }{ $address } = $ref if( $address );
 				if( $class ) {
 					unless( int( eval( "\%$class"."::")) ) {
-						eval {
-							require $class;
-						};
+						eval "require $class;";
 						if( $@ ) {
 							warn $@;
 						}
@@ -579,9 +577,7 @@ sub undump {
 				}
 				if( $class ) {
 					unless( int( eval( "\%$class"."::")) ) {
-						eval {
-							require $class;
-						};
+						eval "require $class;";
 						if( $@ ) {
 							warn $@;
 						}
@@ -622,9 +618,7 @@ sub undump {
 				}
 				if( $class ) {
 					unless( int( eval( "\%$class"."::")) ) {
-						eval {
-							require $class;
-						};
+						eval "require $class;";
 						if( $@ ) {
 							warn $@;
 						}
@@ -662,6 +656,7 @@ sub quote_xml_chars {
     s/&/&amp;/g;
     s/</&lt;/g;
     s/>/&gt;/g;
+    s/[\0\ca\cb\cc\cd\ce\cf\cg\ch\ck\cl\cn\co\cp\cq\cr\cs\ct\cu\cv\cw\cx\cy\cz\c[\c\\c]\c^\c_]//g;
     s/'/&apos;/g;
     s/"/&quot;/g;
     return $_;
