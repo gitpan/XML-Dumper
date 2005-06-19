@@ -1,7 +1,12 @@
 Revision history for Perl extension XML::Dumper.
 
+0.74  Sun Jun 19 12:35:20 PDT 2005
+    - Included a patch developed by Lasse Makholm which prevented
+      evaluation of tainted xml. Thanks again to Lasse for his
+      vigilence and care!
+
 0.73  Thu Jun  2 01:57:54 PDT 2005
-    - Included a patch developed by Lasse which corrected a stupid 
+    - Included a patch developed by Lasse Makholm which corrected a stupid 
       but subtle mistake on my part on requiring modules. Thanks to
       Lasse for the patch and his incredible patience.
 

@@ -139,7 +139,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
-our $VERSION = '0.73'; 
+our $VERSION = '0.74'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -532,6 +532,10 @@ sub undump {
 				$self->{ perldata }{ $address } = $ref if( $address );
 				if( $class ) {
 					unless( int( eval( "\%$class"."::")) ) {
+						# Check class name for nasty stuff...
+						$class =~ m/^[\w-]+(?=::[\w-]+)*$/
+							or die "Refusing to load unsafe class name '$class'\n";
+
 						eval "require $class;";
 						if( $@ ) {
 							warn $@;
@@ -577,6 +581,10 @@ sub undump {
 				}
 				if( $class ) {
 					unless( int( eval( "\%$class"."::")) ) {
+						# Check class name for nasty stuff...
+						$class =~ m/^[\w-]+(?=::[\w-]+)*$/
+							or die "Refusing to load unsafe class name '$class'\n";
+
 						eval "require $class;";
 						if( $@ ) {
 							warn $@;
@@ -618,6 +626,10 @@ sub undump {
 				}
 				if( $class ) {
 					unless( int( eval( "\%$class"."::")) ) {
+						# Check class name for nasty stuff...
+						$class =~ m/^[\w-]+(?=::[\w-]+)*$/
+							or die "Refusing to load unsafe class name '$class'\n";
+
 						eval "require $class;";
 						if( $@ ) {
 							warn $@;
