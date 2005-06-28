@@ -21,6 +21,7 @@ t/13_untaint_classnames.t
 t/classes/Array_object.pm
 t/classes/Hash_object.pm
 t/classes/Scalar_object.pm
+t/classes/Class/With/A/Long/Namespace/Scalar_object.pm
 t/data/compression.xml.gz
 t/data/file.xml
 t/handle_undef.t

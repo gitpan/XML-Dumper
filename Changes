@@ -1,5 +1,13 @@
 Revision history for Perl extension XML::Dumper.
 
+0.75  Tue Jun 28 10:35:19 PDT 2005
+    - Got an anonymous tip to re-look at the untainting regex as too
+      constraining. Found that the look-ahead was unnecessary. Changed
+      the regex a bit (keeping the [\w-]+ pattern; evidently someone's
+      using dashes in their package names), and extended the test.
+      Also noted that the untainting didn't happen before the eval
+      which does the symbol table lookup, so I fixed that.
+
 0.74  Sun Jun 19 12:35:20 PDT 2005
     - Included a patch developed by Lasse Makholm which prevented
       evaluation of tainted xml. Thanks again to Lasse for his
