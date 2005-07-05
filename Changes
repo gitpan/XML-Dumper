@@ -1,5 +1,12 @@
 Revision history for Perl extension XML::Dumper.
 
+0.76  Tue Jul  5 12:24:23 PDT 2005
+    - Got a bug report from Steven Allen with regards to the overloaded
+      "" operator. Unfortunately, I can't seem to re-create
+      the bug, although the patch doesn't fail any tests. Apparently,
+      the "" operator kicks in before scalar() gets a chance to do its
+      thing. Seems to work OK, so here's the patched version.
+
 0.75  Tue Jun 28 10:35:19 PDT 2005
     - Got an anonymous tip to re-look at the untainting regex as too
       constraining. Found that the look-ahead was unnecessary. Changed

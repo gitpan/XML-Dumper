@@ -134,12 +134,13 @@ use warnings;
 
 require Exporter;
 use XML::Parser;
+use overload;
 
 our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
-our $VERSION = '0.75'; 
+our $VERSION = '0.76'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -284,14 +285,14 @@ sub dump {
 				last OBJECT if /^(?:SCALAR|HASH|ARRAY)$/;
 				$class = $_;
 				$class = &quote_xml_chars( $class );
-				($_,$address) = scalar( $ref ) =~ /$class=([^(]+)\(([x0-9A-Fa-f]+)\)/;
+				($_,$address) = overload::StrVal( $ref ) =~ /$class=([^(]+)\(([x0-9A-Fa-f]+)\)/;
 			}
 
 			# ----------------------------------------
 			MEMORY_ADDRESS: {
 			# ----------------------------------------
 				last MEMORY_ADDRESS if( $class );
-				($_,$address) = scalar( $ref ) =~ /([^(]+)\(([x0-9A-Fa-f]+)\)/;
+				($_,$address) = overload::StrVal( $ref ) =~ /([^(]+)\(([x0-9A-Fa-f]+)\)/;
 			}
 
 			$reused = exists( $self->{ xml }{ $address } );

@@ -18,9 +18,11 @@ t/10_backwards_compatible.t
 t/11_control_characters.t
 t/12_class_loading.t
 t/13_untaint_classnames.t
+t/14_overloading.t
 t/classes/Array_object.pm
 t/classes/Hash_object.pm
 t/classes/Scalar_object.pm
+t/classes/Overloaded_object.pm
 t/classes/Class/With/A/Long/Namespace/Scalar_object.pm
 t/data/compression.xml.gz
 t/data/file.xml
