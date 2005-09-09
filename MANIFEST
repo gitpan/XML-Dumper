@@ -19,6 +19,7 @@ t/11_control_characters.t
 t/12_class_loading.t
 t/13_untaint_classnames.t
 t/14_overloading.t
+t/15_oo_cmp_ident.t
 t/classes/Array_object.pm
 t/classes/Hash_object.pm
 t/classes/Scalar_object.pm

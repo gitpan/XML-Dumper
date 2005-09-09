@@ -1,5 +1,21 @@
 Revision history for Perl extension XML::Dumper.
 
+0.79  Fri Sep  9 12:13:21 PDT 2005
+    - New bug report on CPAN from Dustin Cram reports that xml_compare
+      and xml_identify should have an OO invocation too. Seems like
+      a reasonable request, so here it is!
+
+0.78  Mon Aug  1 18:05:44 PDT 2005
+    - Saw a bug report on CPAN that's nearly two years old. This
+      fixes my poor test-skipping technique with a far better one.
+      Bug and fix reported by Steve. Don't know why I didn't see
+      this one before.
+
+0.77  (not released)
+    - Changed 'quote_xml_chars()' to 'xml_escape()' to reflect its
+      added functionality. Hope no-one was relying on this internal
+      function, as there are probably better escape functions.
+
 0.76  Tue Jul  5 12:24:23 PDT 2005
     - Got a bug report from Steven Allen with regards to the overloaded
       "" operator. Unfortunately, I can't seem to re-create
@@ -8,7 +24,7 @@ Revision history for Perl extension XML::Dumper.
       thing. Seems to work OK, so here's the patched version.
 
 0.75  Tue Jun 28 10:35:19 PDT 2005
-    - Got an anonymous tip to re-look at the untainting regex as too
+    - Got tip from Kerry Jones re-look at the untainting regex as too
       constraining. Found that the look-ahead was unnecessary. Changed
       the regex a bit (keeping the [\w-]+ pattern; evidently someone's
       using dashes in their package names), and extended the test.

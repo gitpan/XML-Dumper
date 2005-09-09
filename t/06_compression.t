@@ -1,19 +1,15 @@
 use strict;
 use warnings;
 
-use Test;
+use Test::More;
 use XML::Dumper;
 
-BEGIN { plan tests => 1 }
-
-our $COMPRESSION_AVAILABLE;
-
-INIT {
+BEGIN {
 	eval { require Compress::Zlib; };
 	if( $@ ) {
-		$COMPRESSION_AVAILABLE = 0;
+		plan skip_all => 'Compress::Zlib is not installed'
 	} else {
-		$COMPRESSION_AVAILABLE = 1;
+		plan tests => 1;
 	}
 }
 
@@ -28,11 +24,6 @@ sub check( $ ) {
 # (twice, cuz I lost it the first time), 22 Jul 2003
 # ------------------------------------------------------------
 	my $test = shift;
-
-	if( not $COMPRESSION_AVAILABLE ) {
-		skip( 1, 'Compress::Zlib not installed; compression feature disabled' );
-		return;
-	}
 
 	my $gz = Compress::Zlib::gzopen( 't/data/compression.xml.gz', 'rb' );
 	my @xml;

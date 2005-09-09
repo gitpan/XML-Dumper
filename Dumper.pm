@@ -140,7 +140,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
-our $VERSION = '0.76'; 
+our $VERSION = '0.79'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -269,7 +269,7 @@ sub dump {
 
     my $string = '';
 
-	# ===== REFERENCES
+	# ===== HANDLE REFERENCE DUMPING
 	if( ref $ref ) {
 		no warnings;
 		local $_ = ref( $ref );
@@ -277,21 +277,23 @@ sub dump {
 		my $address = '';
 		my $reused = '';
 
-		PERL_TYPE: {
-
+		# ===== HANDLE THE VARIETY OF THINGS A PERL REFERENCE CAN REFER TO
+		REFERENCE: {
 			# ----------------------------------------
 			OBJECT: {
 			# ----------------------------------------
 				last OBJECT if /^(?:SCALAR|HASH|ARRAY)$/;
 				$class = $_;
-				$class = &quote_xml_chars( $class );
+				$class = xml_escape( $class );
 				($_,$address) = overload::StrVal( $ref ) =~ /$class=([^(]+)\(([x0-9A-Fa-f]+)\)/;
 			}
 
 			# ----------------------------------------
-			MEMORY_ADDRESS: {
+			HAS_MEMORY_ADDRESS: {
 			# ----------------------------------------
-				last MEMORY_ADDRESS if( $class );
+			# References which refer to the same memory space point to the 
+			# same thing
+				last HAS_MEMORY_ADDRESS if( $class );
 				($_,$address) = overload::StrVal( $ref ) =~ /([^(]+)\(([x0-9A-Fa-f]+)\)/;
 			}
 
@@ -307,8 +309,8 @@ sub dump {
 					( defined $$ref ? '' : " defined=\"false\"" ) .
 					">";
 				$self->{ xml }{ $address }++ if( $address );
-				$string = "\n" . " " x $indent .  $type . ($reused ? '' : &quote_xml_chars($$ref)) . "</scalarref>";
-				last PERL_TYPE;
+				$string = "\n" . " " x $indent .  $type . ($reused ? '' : xml_escape($$ref)) . "</scalarref>";
+				last REFERENCE;
 			}
 
 			# ----------------------------------------
@@ -326,7 +328,7 @@ sub dump {
 					foreach my $key (sort keys(%$ref)) {
 						my $type =
 							"<item " .
-							"key=\"" . &quote_xml_chars( $key ) . "\"" .
+							"key=\"" . xml_escape( $key ) . "\"" .
 							( defined $ref->{ $key } ? '' : " defined=\"false\"" ) .
 							">";
 						$string .= "\n" . " " x $indent . $type;
@@ -334,13 +336,13 @@ sub dump {
 							$string .= $self->dump( $ref->{$key}, $indent+1);
 							$string .= "\n" . " " x $indent . "</item>";
 						} else {
-							$string .= &quote_xml_chars($ref->{$key}) . "</item>";
+							$string .= xml_escape($ref->{$key}) . "</item>";
 						}
 					}
 					$indent--;
 				}
 				$string .= "\n" . " " x $indent . "</hashref>";
-				last PERL_TYPE;
+				last REFERENCE;
 			}
 
 			# ----------------------------------------
@@ -359,7 +361,7 @@ sub dump {
 						my $defined;
 						my $type =
 							"<item " .
-							"key=\"" . &quote_xml_chars( $i ) . "\"" .
+							"key=\"" . xml_escape( $i ) . "\"" .
 							( defined $ref->[ $i ] ? '' : " defined=\"false\"" ) .
 							">";
 
@@ -368,25 +370,25 @@ sub dump {
 							$string .= $self->dump($ref->[$i], $indent+1);
 							$string .= "\n" . " " x $indent . "</item>";
 						} else {
-							$string .= &quote_xml_chars($ref->[$i]) . "</item>";
+							$string .= xml_escape($ref->[$i]) . "</item>";
 						}
 					}
 					$indent--;
 				}
 				$string .= "\n" . " " x $indent . "</arrayref>";
-				last PERL_TYPE;
+				last REFERENCE;
 			}
 
 		}
     
-    # ===== SCALAR
+    # ===== HANDLE SCALAR DUMPING
     } else {
 		my $type = 
 			"<scalar". 
 			( defined $ref ? '' : " defined=\"false\"" ) .
 			">";
 
-		$string .= "\n" . " " x $indent . $type . &quote_xml_chars( $ref ) . "</scalar>";
+		$string .= "\n" . " " x $indent . $type . xml_escape( $ref ) . "</scalar>";
     }
     
     return( $string );
@@ -469,7 +471,6 @@ sub undump {
 #
 # <tag name>, [ { <attributes }, '0', <[text]>, <[children tag-array pair value(s)]...> ]
 # ------------------------------------------------------------
-
 	my $self = shift;
     my $tree = shift;
 	my $callback = shift;
@@ -481,7 +482,6 @@ sub undump {
 	no warnings; 
 
     TREE: for (my $i = 1; $i < $#$tree; $i+=2) {		
-		no warnings;
 		local $_ = lc( $tree->[ $i ] );
 		my $class = '';
 		my $address = '';
@@ -662,8 +662,12 @@ sub undump {
 }
 
 # ============================================================
-sub quote_xml_chars {
+sub xml_escape {
 # ============================================================
+# Transforms and filters input characters to acceptable XML characters 
+# (or filters them out completely). There's probably a better
+# implementation of this in another module, by now.
+# ------------------------------------------------------------
 	local $_ = shift;
 	return $_ if not defined $_;
     s/&/&amp;/g;
@@ -764,16 +768,22 @@ sub xml_compare {
 
 Compares two dumped Perl data structures (that is, compares the xml) for
 identity in content. Use this function rather than perl's built-in string 
-comparison, especially when dealing with perl data that is memory-location 
-dependent (which pretty much means all references).  This function will 
-return true for any two perl data that are either deep clones of each 
-other, or identical. This method is exported by default.
+comparison. This function will return true for any two perl data that are 
+either deep clones of each other, or identical. This method is exported 
+by default.
 
 =cut
 
 # ------------------------------------------------------------
+	my $self = shift;
 	my $xml1 = shift;
 	my $xml2 = shift;
+
+	my $class = ref $self;
+	if( $class ne 'XML::Dumper' ) {
+		$xml2 = $xml1;
+		$xml1 = $self;
+	}
 
 	$xml1 =~ s/(<[^>]*)\smemory_address="\dx[A-Za-z0-9]+"([^<]*>)/$1$2/g;
 	$xml2 =~ s/(<[^>]*)\smemory_address="\dx[A-Za-z0-9]+"([^<]*>)/$1$2/g;
@@ -807,8 +817,15 @@ method is also exported by default.
 =cut
 
 # ------------------------------------------------------------
+	my $self = shift;
 	my $xml1 = shift;
 	my $xml2 = shift;
+
+	my $class = ref $self;
+	if( $class ne 'XML::Dumper' ) {
+		$xml2 = $xml1;
+		$xml1 = $self;
+	}
 
 	return ( $xml1 eq $xml2 );
 }
