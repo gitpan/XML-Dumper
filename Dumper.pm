@@ -15,18 +15,18 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
 
 =head1 SYNOPSIS
 
-  # ===== OO-way
+  # ===== Using an object
   use XML::Dumper;
   $dump = new XML::Dumper;
 
-  $xml = $dump->pl2xml( $perl );
+  $xml  = $dump->pl2xml( $perl );
   $perl = $dump->xml2pl( $xml );
   $dump->pl2xml( $perl, "my_perl_data.xml.gz" );
 
-  # ===== Functional way
+  # ===== Using function calls
   use XML::Dumper;
 
-  $xml = pl2xml( $perl );
+  $xml  = pl2xml( $perl );
   $perl = xml2pl( $xml );
 
 =head1 EXTENDED SYNOPSIS
@@ -34,20 +34,20 @@ XML::Dumper - Perl module for dumping Perl objects from/to XML
   use XML::Dumper;
   my $dump = new XML::Dumper;
 
-  my $perl	= '';
-  my $xml	= '';
+  my $perl  = '';
+  my $xml   = '';
 
   # ===== Convert Perl code to XML
   $perl = [
     {
-		fname		=> 'Fred',
-		lname		=> 'Flintstone',
-		residence	=> 'Bedrock'
+		fname       => 'Fred',
+		lname       => 'Flintstone',
+		residence   => 'Bedrock'
     },
     {
-		fname		=> 'Barney',
-		lname		=> 'Rubble',
-		residence	=> 'Bedrock'
+		fname       => 'Barney',
+		lname       => 'Rubble',
+		residence   => 'Bedrock'
     }
   ];
   $xml = $dump->pl2xml( $perl );
@@ -120,6 +120,14 @@ doubly-linked lists, circular references, and the so-called 'Flyweight' pattern 
 Object Oriented programming. So it can take the gnarliest of your perl data, and 
 should do just fine.
 
+One caveat; XML::Dumper does not handle binary data. There have been
+discussions in the expat mailing list archives discussing the challenges
+associated with encoding binary data with XML. I chose the cowardly path
+of making the problem a non-issue by not addressing it. To store binary
+data, one could encode the data into ASCII before encapsulating the data
+as XML, and then reverse the process to restore the data. There are several
+Perl modules that one can use for this, Convert::UU, for example. 
+
 =head2 FUNCTIONS AND METHODS
 
 =over 4
@@ -140,7 +148,7 @@ our @ISA = qw( Exporter );
 our %EXPORT_TAGS = ( );
 our @EXPORT_OK = ( );
 our @EXPORT = qw( xml2pl pl2xml xml_compare xml_identity );
-our $VERSION = '0.79'; 
+our $VERSION = '0.81'; 
 
 our $COMPRESSION_AVAILABLE;
 
@@ -170,7 +178,7 @@ at your disposal.
     my ($class) = map { ref || $_ } shift;
     my $self = bless {}, $class;
 
-	$self->init;
+	$self->init( @_ );
 
     return $self;
 }
@@ -179,8 +187,9 @@ at your disposal.
 sub init {
 # ============================================================
 	my $self = shift;
-	$self->{ perldata }	= {};
-	$self->{ xml }		= {};
+	$self->{ perldata }          = {};
+	$self->{ xml }               = {};
+	$self->{ xml_parser_params } = { @_ };
 	1;
 }
 
@@ -750,7 +759,7 @@ interface doesn't have such a named method, it won't be called.
 		}
 	}
 
-	my $parser = new XML::Parser(Style => 'Tree');
+	my $parser = new XML::Parser( %{ $self->{ xml_parser_params }}, Style => 'Tree' );
 	my $tree = $parser->parse($xml);
 
     # Skip enclosing "perldata" level
